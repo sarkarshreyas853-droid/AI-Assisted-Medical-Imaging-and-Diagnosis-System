@@ -49,9 +49,11 @@ Fill these in after training:
 
 | Model | Metric | Value |
 |---|---|---|
-| DenseNet121 (validation) | Accuracy | TBD |
-| DenseNet121 (validation) | AUC | TBD |
-| 3D U-Net spleen (validation) | Dice | TBD |
+| DenseNet121 (validation, epoch 5) | Accuracy | 0.978 |
+| DenseNet121 (validation, epoch 5) | AUC | 0.998 |
+| 3D U-Net spleen (validation) | Dice | Not yet trained (pipeline smoke-tested only) |
+
+Note: the train and validation split is random, so the same patient may appear in both. These numbers may overstate performance on new patients. This is an educational prototype and not a clinical tool.
 
 ## Limitations
 
