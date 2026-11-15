@@ -22,7 +22,10 @@ DISCLAIMER = "For education only. Not for clinical use. Outputs must not inform 
 app = FastAPI(title="AI-Assisted Imaging (education demo)", description=DISCLAIMER)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://nexvia-aiml-02-shreyas-sarkar-s-projects.vercel.app",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
