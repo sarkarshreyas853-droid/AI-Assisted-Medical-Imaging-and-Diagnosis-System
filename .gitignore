@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+data/raw/
+data/processed/
+models/*.pt
+models/*.onnx
+logs/
+frontend/node_modules/
+frontend/dist/
+.dvc/tmp/
+.env

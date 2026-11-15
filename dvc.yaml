@@ -1,0 +1,12 @@
+# Reproducible pipeline. Run with: dvc repro
+stages:
+  train_classifier:
+    cmd: python training/train_classifier.py --data data/raw/chest --epochs 5 --out models/classifier.pt
+    deps:
+      - training/train_classifier.py
+      - backend/app/imaging.py
+      - backend/app/classifier.py
+      - data/raw/chest
+    outs:
+      - models/classifier.pt
+    metrics: []
