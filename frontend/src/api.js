@@ -1,6 +1,7 @@
 export const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const WAKE_RETRY_DELAYS_MS = [4000, 10000, 20000];
+const REQUEST_TIMEOUT_MS = 40000;
 
 // The backend may be asleep on a free host and take a while to wake up, so a
 // network failure is retried a few times before giving up with a clear message.
@@ -13,11 +14,15 @@ export async function predict(file) {
     const form = new FormData();
     form.append("file", file);
     let res;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     try {
-      res = await fetch(`${API}/predict`, { method: "POST", body: form });
+      res = await fetch(`${API}/predict`, { method: "POST", body: form, signal: controller.signal });
     } catch (err) {
       lastError = err;
-      continue; // network failure: server may still be waking up
+      continue; // network failure or stalled request: try again
+    } finally {
+      clearTimeout(timer);
     }
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
