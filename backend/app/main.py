@@ -61,8 +61,7 @@ async def predict(file: UploadFile = File(...)):
 
     clf = get_classifier()
     x = to_tensor(image)
-    label, confidence, idx = clf.predict(x)
-    heatmap_b64 = clf.gradcam(x, idx, image)
+    label, confidence, idx, heatmap_b64 = clf.analyse(x, image)
 
     buf = io.BytesIO()
     image.save(buf, format="PNG")

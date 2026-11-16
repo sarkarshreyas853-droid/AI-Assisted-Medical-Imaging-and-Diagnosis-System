@@ -42,6 +42,46 @@ class Classifier:
         idx = int(torch.argmax(probs))
         return CLASS_NAMES[idx], float(probs[idx]), idx
 
+    def analyse(self, x: torch.Tensor, original: Image.Image) -> tuple[str, float, int, str]:
+        """Classify and build the Grad-CAM heatmap in a single forward pass."""
+        target = self.model.features.denseblock4
+        activations, gradients = {}, {}
+
+        def fwd_hook(_, __, out):
+            activations["value"] = out
+
+        def bwd_hook(_, grad_in, grad_out):
+            gradients["value"] = grad_out[0]
+
+        h1 = target.register_forward_hook(fwd_hook)
+        h2 = target.register_full_backward_hook(bwd_hook)
+        try:
+            self.model.zero_grad()
+            out = self.model(x)
+            probs = F.softmax(out, dim=1)[0].detach()
+            idx = int(torch.argmax(probs))
+            out[0, idx].backward()
+            acts = activations["value"].detach()
+            grads = gradients["value"].detach()
+            weights = grads.mean(dim=(2, 3), keepdim=True)
+            cam = F.relu((weights * acts).sum(dim=1, keepdim=True))
+            cam = F.interpolate(cam, size=original.size[::-1], mode="bilinear", align_corners=False)
+            cam = cam[0, 0].numpy()
+            cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
+        finally:
+            h1.remove()
+            h2.remove()
+            self.model.zero_grad()
+
+        heat = np.uint8(255 * cam)
+        heat_rgb = np.stack([heat, np.zeros_like(heat), 255 - heat], axis=-1)
+        base = np.asarray(original.convert("RGB"), dtype=np.float32)
+        blended = np.clip(0.55 * base + 0.45 * heat_rgb, 0, 255).astype(np.uint8)
+        buf = io.BytesIO()
+        Image.fromarray(blended).save(buf, format="PNG")
+        heatmap_b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+        return CLASS_NAMES[idx], float(probs[idx]), idx, heatmap_b64
+
     def gradcam(self, x: torch.Tensor, class_idx: int, original: Image.Image) -> str:
         """Return a base64 PNG of the Grad-CAM heatmap overlaid on the original image."""
         target = self.model.features.denseblock4  # last dense block
