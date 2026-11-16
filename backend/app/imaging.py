@@ -33,12 +33,18 @@ def _dicom_to_uint8(data: bytes) -> np.ndarray:
     return (arr * 255).astype(np.uint8)
 
 
+MAX_SIDE = 1024  # large uploads are shrunk so the Grad-CAM overlay fits in memory
+
+
 def load_image(data: bytes, filename: str) -> Image.Image:
-    """Return an RGB PIL image from raw upload bytes."""
+    """Return an RGB PIL image from raw upload bytes, shrunk to at most MAX_SIDE pixels."""
     if filename.lower().endswith((".dcm", ".dicom")):
         gray = _dicom_to_uint8(data)
-        return Image.fromarray(gray).convert("RGB")
-    return Image.open(io.BytesIO(data)).convert("RGB")
+        img = Image.fromarray(gray).convert("RGB")
+    else:
+        img = Image.open(io.BytesIO(data)).convert("RGB")
+    img.thumbnail((MAX_SIDE, MAX_SIDE), Image.BILINEAR)
+    return img
 
 
 def to_tensor(img: Image.Image) -> torch.Tensor:
