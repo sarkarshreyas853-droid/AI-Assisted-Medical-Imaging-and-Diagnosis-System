@@ -13,22 +13,24 @@ export async function predict(file) {
     }
     const form = new FormData();
     form.append("file", file);
-    let res;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     try {
-      res = await fetch(`${API}/predict`, { method: "POST", body: form, signal: controller.signal });
+      const res = await fetch(`${API}/predict`, { method: "POST", body: form, signal: controller.signal });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || "Prediction failed");
+      }
+      // Read the body while the timeout is still running, so a stalled body also retries.
+      return await res.json();
     } catch (err) {
-      lastError = err;
-      continue; // network failure or stalled request: try again
+      if (err.name !== "AbortError" && !(err instanceof TypeError)) {
+        throw err; // a real server error (e.g. bad image) should be shown, not retried
+      }
+      lastError = err; // stalled or dropped connection: try again
     } finally {
       clearTimeout(timer);
     }
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.detail || "Prediction failed");
-    }
-    return res.json();
   }
   throw new Error(
     "Could not reach the analysis server. It may be waking up after inactivity. Wait a minute and try again."
