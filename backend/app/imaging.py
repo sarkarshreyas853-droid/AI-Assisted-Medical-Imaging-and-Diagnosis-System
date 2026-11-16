@@ -33,7 +33,7 @@ def _dicom_to_uint8(data: bytes) -> np.ndarray:
     return (arr * 255).astype(np.uint8)
 
 
-MAX_SIDE = 1024  # large uploads are shrunk so the Grad-CAM overlay fits in memory
+MAX_SIDE = 512  # large uploads are shrunk so the Grad-CAM overlay fits in memory
 
 
 def load_image(data: bytes, filename: str) -> Image.Image:

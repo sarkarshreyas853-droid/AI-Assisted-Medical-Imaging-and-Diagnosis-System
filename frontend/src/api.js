@@ -1,7 +1,7 @@
 export const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-const WAKE_RETRY_DELAYS_MS = [4000, 10000, 20000];
-const REQUEST_TIMEOUT_MS = 40000;
+const WAKE_RETRY_DELAYS_MS = [4000, 10000];
+const REQUEST_TIMEOUT_MS = 120000;
 
 // The backend may be asleep on a free host and take a while to wake up, so a
 // network failure is retried a few times before giving up with a clear message.
