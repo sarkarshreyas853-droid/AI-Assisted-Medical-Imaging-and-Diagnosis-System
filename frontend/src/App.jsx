@@ -8,6 +8,7 @@ export default function App() {
   const [scan, setScan] = useState(null);
   const [showHeatmap, setShowHeatmap] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState("Analysing scan...");
   const [error, setError] = useState("");
   const [reviewer, setReviewer] = useState("");
   const [decided, setDecided] = useState(null);
@@ -21,10 +22,11 @@ export default function App() {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
+    setStatus("Analysing scan...");
     setError("");
     setDecided(null);
     try {
-      setScan(await predict(file));
+      setScan(await predict(file, setStatus));
     } catch (err) {
       setError(err.message);
       setScan(null);
@@ -64,7 +66,7 @@ export default function App() {
         </label>
       </section>
 
-      {busy && <p className="status">Analysing scan...</p>}
+      {busy && <p className="status">{status}</p>}
       {error && <p className="error">{error}</p>}
 
       {scan && (

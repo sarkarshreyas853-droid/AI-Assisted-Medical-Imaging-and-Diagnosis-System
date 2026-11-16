@@ -5,12 +5,19 @@ const REQUEST_TIMEOUT_MS = 40000;
 
 // The backend may be asleep on a free host and take a while to wake up, so a
 // network failure is retried a few times before giving up with a clear message.
-export async function predict(file) {
+// onStatus(text) lets the page show what is happening, e.g. while the server wakes up.
+export async function predict(file, onStatus = () => {}) {
   let lastError;
   for (let attempt = 0; attempt <= WAKE_RETRY_DELAYS_MS.length; attempt++) {
     if (attempt > 0) {
+      onStatus(`Server is waking up. Retrying (${attempt} of ${WAKE_RETRY_DELAYS_MS.length})...`);
       await new Promise((resolve) => setTimeout(resolve, WAKE_RETRY_DELAYS_MS[attempt - 1]));
     }
+    // If the first attempt is slow, tell the user the free server may be waking up.
+    const slowNotice = setTimeout(
+      () => onStatus("Server is waking up. This can take up to a minute on the free hosting plan..."),
+      8000
+    );
     const form = new FormData();
     form.append("file", file);
     const controller = new AbortController();
@@ -30,6 +37,7 @@ export async function predict(file) {
       lastError = err; // stalled or dropped connection: try again
     } finally {
       clearTimeout(timer);
+      clearTimeout(slowNotice);
     }
   }
   throw new Error(
