@@ -26,6 +26,8 @@ app.add_middleware(
         "http://localhost:5173",
         "https://nexvia-aiml-02-shreyas-sarkar-s-projects.vercel.app",
     ],
+    # Every deployment URL of this project on Vercel (preview and per-deploy aliases).
+    allow_origin_regex=r"^https://nexvia-aiml-02[a-z0-9-]*\.vercel\.app$",
     allow_methods=["*"],
     allow_headers=["*"],
 )
