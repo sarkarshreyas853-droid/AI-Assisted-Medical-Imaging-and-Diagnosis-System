@@ -9,6 +9,7 @@ export default function App() {
   const [showHeatmap, setShowHeatmap] = useState(true);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("Analysing scan...");
+  const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
   const [reviewer, setReviewer] = useState("");
   const [decided, setDecided] = useState(null);
@@ -21,10 +22,17 @@ export default function App() {
   async function onUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Show the picked image straight away; the analysis fills in when the server replies.
+    const localUrl = URL.createObjectURL(file);
+    setPreview((old) => {
+      if (old) URL.revokeObjectURL(old);
+      return localUrl;
+    });
     setBusy(true);
     setStatus("Analysing scan...");
     setError("");
     setDecided(null);
+    setScan(null);
     try {
       setScan(await predict(file, setStatus));
     } catch (err) {
@@ -66,7 +74,19 @@ export default function App() {
         </label>
       </section>
 
-      {busy && <p className="status">{status}</p>}
+      {preview && !scan && (
+        <section className="card result">
+          <div className="images">
+            <div className="frame">
+              <img src={preview} alt="Uploaded scan" />
+            </div>
+            <div className="details">
+              <p className="label">{busy ? status : "Waiting for the analysis."}</p>
+            </div>
+          </div>
+        </section>
+      )}
+      {busy && !preview && <p className="status">{status}</p>}
       {error && <p className="error">{error}</p>}
 
       {scan && (
